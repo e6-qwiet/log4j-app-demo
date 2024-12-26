@@ -20,7 +20,7 @@ jobs:
     # Build container
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build -f cve-neo/Dockerfile --tag log4j-app-demo:latest .
+      run: docker build -f cve-neo/Dockerfile --no-cache --tag log4j-app-demo:latest .
     - name: Save Docker Images Locally 
       run: docker save -o log4j-app-demo log4j-app-demo:latest
 
