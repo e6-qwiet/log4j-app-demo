@@ -69,7 +69,3 @@ jobs:
       with:
         sarif_file: ./ngsast-report-${{ github.event.repository.name }}.sarif  # Correct dynamic path for SARIF output
 
-
-    runs-on: ubuntu-latest
-
-
