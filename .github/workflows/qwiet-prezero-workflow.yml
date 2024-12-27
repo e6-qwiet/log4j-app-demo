@@ -37,8 +37,8 @@ jobs:
       with:
         java-version: 1.8
 
-    - name: Package with Maven
-      run: mvn clean package
+    #- name: Package with Maven
+    #  run: mvn clean package
 
     - name: NextGen Static Analysis
       run: ${GITHUB_WORKSPACE}/sl analyze --app log4j-app-demo-github --tag branch=${{ github.head_ref || steps.extract_branch.outputs.branch }} --verbose --strict --wait 
