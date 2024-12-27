@@ -41,7 +41,7 @@ jobs:
     #  run: mvn clean package
 
     - name: NextGen Static Analysis
-      run: ${GITHUB_WORKSPACE}/sl analyze --app log4j-app-demo-github --tag branch=${{ github.head_ref || steps.extract_branch.outputs.branch }} --verbose --strict --wait 
+      run: ${GITHUB_WORKSPACE}/sl analyze --app log4j-app-demo-github --tag branch=${{ github.head_ref || steps.extract_branch.outputs.branch }} --verbose --strict --wait --checkov
 
       env:
         SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
@@ -63,7 +63,7 @@ jobs:
 
     - name: Run export.py and generate SARIF report
       run: |
-        APP_NAME=${{ github.event.repository.name }}
+        APP_NAME=${{ github.event.repository.name }}-github
         python3 export.py -f sarif -a $APP_NAME
       env:
         SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
@@ -71,5 +71,5 @@ jobs:
     - name: Upload SARIF file to GitHub Security Tab
       uses: github/codeql-action/upload-sarif@v3  # Updated to v3
       with:
-        sarif_file: ./ngsast-report-${{ github.event.repository.name }}.sarif  # Correct dynamic path for SARIF output
+        sarif_file: ./ngsast-report-${{ github.event.repository.name }}-github.sarif  # Correct dynamic path for SARIF output
 
