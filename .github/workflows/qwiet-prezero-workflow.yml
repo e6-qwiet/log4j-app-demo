@@ -1,0 +1,75 @@
+# This workflow integrates Qwiet preZero with GitHub
+# Visit https://docs.shiftleft.io for help
+name: Qwiet
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    # We recommend triggering a scan when merging to your default branch
+    # as a best practice, especially if you'd like to compare the results
+    # of two scans (e.g., a feature branch against the default branch)
+    branches:
+      - main
+      - master
+jobs:
+  ngsast-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Build container
+    #- uses: actions/checkout@v3
+    #- name: Build the Docker image
+    #  run: docker build -f cve-neo/Dockerfile --no-cache --tag log4j-app-demo:latest .
+    #- name: Save Docker Images Locally 
+    #  run: docker save -o log4j-app-demo log4j-app-demo:latest
+
+    
+    - uses: actions/checkout@v4
+
+    - name: Download the Qwiet CLI and set permissions
+      run: |
+        curl https://cdn.shiftleft.io/download/sl > ${GITHUB_WORKSPACE}/sl && chmod a+rx ${GITHUB_WORKSPACE}/sl
+
+    # Qwiet requires Java 1.8
+    - name: Set up Java
+      uses: actions/setup-java@v1.4.3
+      with:
+        java-version: 1.8
+
+    #- name: Package with Maven
+    #  run: mvn clean package
+
+    - name: NextGen Static Analysis
+      run: ${GITHUB_WORKSPACE}/sl analyze --app log4j-app-demo-github --tag branch=${{ github.head_ref || steps.extract_branch.outputs.branch }} --verbose --strict --wait 
+
+      env:
+        SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
+        SHIFTLEFT_API_HOST: www.shiftleft.io
+        SHIFTLEFT_GRPC_TELEMETRY_HOST: telemetry.shiftleft.io:443
+        SHIFTLEFT_GRPC_API_HOST: api.shiftleft.io:443
+
+    - name: Download export.py and requirements.txt
+      run: |
+        curl -O https://raw.githubusercontent.com/ShiftLeftSecurity/field-integrations/master/shiftleft-utils/export.py
+        curl -O https://raw.githubusercontent.com/ShiftLeftSecurity/field-integrations/master/shiftleft-utils/config.py
+        curl -O https://raw.githubusercontent.com/ShiftLeftSecurity/field-integrations/master/shiftleft-utils/common.py
+        curl -O https://raw.githubusercontent.com/ShiftLeftSecurity/field-integrations/master/shiftleft-utils/requirements.txt
+
+    - name: Install Python dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -r requirements.txt
+
+    - name: Run export.py and generate SARIF report
+      run: |
+        APP_NAME=${{ github.event.repository.name }}
+        python3 export.py -f sarif -a $APP_NAME
+      env:
+        SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
+
+    - name: Upload SARIF file to GitHub Security Tab
+      uses: github/codeql-action/upload-sarif@v3  # Updated to v3
+      with:
+        sarif_file: ./ngsast-report-${{ github.event.repository.name }}.sarif  # Correct dynamic path for SARIF output
+
